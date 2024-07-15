@@ -1,4 +1,4 @@
-const socket = io();
+const socket = io("localhost:3000");
 
 if (navigator.geolocation) {
   navigator.geolocation.watchPosition(
@@ -23,12 +23,11 @@ if (navigator.geolocation) {
 
 const map = L.map("map").setView([0, 0], 10);
 
-L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{
-}).addTo(map)
-
+L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {}).addTo(
+  map
+);
 
 const markers = {};
-
 
 socket.on("connect_error", (error) => {
   console.error("Connection error:", error);
@@ -66,8 +65,8 @@ socket.on("receive-location", (data) => {
 });
 
 socket.on("user-disconnected", (id) => {
-  if(markers[id]){
+  if (markers[id]) {
     map.removeLayer(markers[id]);
     delete markers[id];
   }
-})
+});
