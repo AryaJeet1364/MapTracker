@@ -1,4 +1,4 @@
-const socket = io("localhost:3000");
+const socket = io();
 
 if (navigator.geolocation) {
   navigator.geolocation.watchPosition(
