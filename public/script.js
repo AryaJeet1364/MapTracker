@@ -150,7 +150,7 @@
 
 const socket = io();
 
-let username = localStorage.getItem("username");
+username = localStorage.getItem("username");
 if (!username) {
   username = prompt("Enter your name") || "Anonymous";
   localStorage.setItem("username", username);
