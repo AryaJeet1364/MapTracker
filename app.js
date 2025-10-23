@@ -25,6 +25,7 @@ io.on("connection", function (socket) {
     //   console.log("Received location data:", data);
     io.emit("receive-location", { id: socket.id, ...data });
   });
+  
   socket.on("disconnect", function () {
     console.log("User disconnected:", socket.id);
     io.emit("user-disconnected", socket.id);
@@ -34,6 +35,7 @@ io.on("connection", function (socket) {
 app.get("/", function (req, res) {
   res.render("index.ejs");
 });
+
 
 const port = 3000;
 server.listen(port, () => {
