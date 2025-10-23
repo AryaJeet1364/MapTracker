@@ -149,7 +149,12 @@
 
 
 const socket = io();
-const username = localStorage.getItem("username");
+
+let username = localStorage.getItem("username");
+if (!username) {
+  username = prompt("Enter your name") || "Anonymous";
+  localStorage.setItem("username", username);
+}
 
 if (navigator.geolocation) {
   navigator.geolocation.getCurrentPosition(
