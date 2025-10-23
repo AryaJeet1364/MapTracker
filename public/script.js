@@ -148,86 +148,207 @@
 
 
 
+// const socket = io();
+
+// let user = localStorage.getItem("username");
+
+// if (navigator.geolocation) {
+//   navigator.geolocation.getCurrentPosition(
+//     (position) => {
+//       const lat = position.coords.latitude;
+//       const lon = position.coords.longitude;
+
+//       // Initialize map at your location
+//       const map = L.map("map").setView([lat, lon], 16);
+//       L.tileLayer(
+//         "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+//         {}
+//       ).addTo(map);
+
+//       const markers = {};
+
+//       // Add your own marker immediately
+//       markers[socket.id] = L.marker([lat, lon])
+//         .bindPopup(`${user} is here`)
+//         .addTo(map)
+//         .openPopup();
+
+//       // Send your first location + name
+//       socket.emit("send-location", {
+//         latitude: lat,
+//         longitude: lon,
+//         name: user,
+//       });
+
+//       // Watch position and update
+//       navigator.geolocation.watchPosition(
+//         (pos) => {
+//           const lat = pos.coords.latitude;
+//           const lon = pos.coords.longitude;
+
+//           markers[socket.id].setLatLng([lat, lon]);
+//           markers[socket.id].bindPopup(`${user} is here`);
+//           map.setView([lat, lon], 16);
+
+//           socket.emit("send-location", {
+//             latitude: lat,
+//             longitude: lon,
+//             name: user,
+//           });
+//         },
+//         (err) => console.error(err),
+//         { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+//       );
+
+//       // Receive locations of other users
+//       socket.on("receive-location", (data) => {
+//         const { id, latitude, longitude, name } = data;
+//         if (id === socket.id) return; // skip self
+
+//         if (markers[id]) {
+//           markers[id].setLatLng([latitude, longitude]);
+//           markers[id].bindPopup(`${name} is here`);
+//         } else {
+//           markers[id] = L.marker([latitude, longitude])
+//             .bindPopup(`${name} is here`)
+//             .addTo(map);
+//         }
+//       });
+
+//       socket.on("user-disconnected", (id) => {
+//         if (markers[id]) {
+//           map.removeLayer(markers[id]);
+//           delete markers[id];
+//         }
+//       });
+//     },
+//     (err) => {
+//       console.error(err);
+//       alert("Cannot get your location.");
+//     },
+//     { enableHighAccuracy: true }
+//   );
+// } else {
+//   alert("Geolocation is not supported by this browser.");
+// }
+
+
 const socket = io();
 
-let user = localStorage.getItem("username");
+// Global username
+username = localStorage.getItem("username");
+if (!username) {
+  username = prompt("Enter your name") || "Anonymous";
+  localStorage.setItem("username", username);
+}
 
-if (navigator.geolocation) {
-  navigator.geolocation.getCurrentPosition(
-    (position) => {
-      const lat = position.coords.latitude;
-      const lon = position.coords.longitude;
+if (!navigator.geolocation) {
+  alert("Geolocation not supported");
+}
 
-      // Initialize map at your location
-      const map = L.map("map").setView([lat, lon], 16);
-      L.tileLayer(
-        "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-        {}
-      ).addTo(map);
+// Markers + polyline
+const markers = {};
+let polyline;
 
-      const markers = {};
+// Get current location
+navigator.geolocation.getCurrentPosition(
+  (position) => {
+    const lat = position.coords.latitude;
+    const lon = position.coords.longitude;
 
-      // Add your own marker immediately
-      markers[socket.id] = L.marker([lat, lon])
-        .bindPopup(`${user} is here`)
-        .addTo(map)
-        .openPopup();
+    // Initialize map
+    const map = L.map("map").setView([lat, lon], 16);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {}).addTo(
+      map
+    );
 
-      // Send your first location + name
-      socket.emit("send-location", {
-        latitude: lat,
-        longitude: lon,
-        name: user,
-      });
+    polyline = L.polyline([], { color: "blue" }).addTo(map);
 
-      // Watch position and update
-      navigator.geolocation.watchPosition(
-        (pos) => {
-          const lat = pos.coords.latitude;
-          const lon = pos.coords.longitude;
+    // Add self marker
+    markers[socket.id] = L.marker([lat, lon])
+      .bindPopup(`${username} is here`)
+      .addTo(map)
+      .openPopup();
 
-          markers[socket.id].setLatLng([lat, lon]);
-          markers[socket.id].bindPopup(`${user} is here`);
-          map.setView([lat, lon], 16);
+    socket.emit("send-location", {
+      latitude: lat,
+      longitude: lon,
+      name: username,
+    });
 
-          socket.emit("send-location", {
-            latitude: lat,
-            longitude: lon,
-            name: user,
-          });
-        },
-        (err) => console.error(err),
-        { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
-      );
+    // Watch position
+    navigator.geolocation.watchPosition(
+      (pos) => {
+        const lat = pos.coords.latitude;
+        const lon = pos.coords.longitude;
 
-      // Receive locations of other users
-      socket.on("receive-location", (data) => {
-        const { id, latitude, longitude, name } = data;
-        if (id === socket.id) return; // skip self
+        markers[socket.id].setLatLng([lat, lon]);
+        markers[socket.id].bindPopup(`${username} is here`).openPopup();
+        map.setView([lat, lon], 16);
 
-        if (markers[id]) {
-          markers[id].setLatLng([latitude, longitude]);
-          markers[id].bindPopup(`${name} is here`);
-        } else {
-          markers[id] = L.marker([latitude, longitude])
-            .bindPopup(`${name} is here`)
-            .addTo(map);
-        }
-      });
+        socket.emit("send-location", {
+          latitude: lat,
+          longitude: lon,
+          name: username,
+        });
+        updatePolyline();
+      },
+      console.error,
+      { enableHighAccuracy: true }
+    );
 
-      socket.on("user-disconnected", (id) => {
-        if (markers[id]) {
-          map.removeLayer(markers[id]);
-          delete markers[id];
-        }
-      });
-    },
-    (err) => {
-      console.error(err);
-      alert("Cannot get your location.");
-    },
-    { enableHighAccuracy: true }
-  );
-} else {
-  alert("Geolocation is not supported by this browser.");
+    // Receive others
+    socket.on("receive-location", (data) => {
+      const { id, latitude, longitude, name } = data;
+      if (id === socket.id) return;
+
+      let [lat2, lon2] = [latitude, longitude];
+
+      // Jitter if another user exists at same spot
+      if (
+        Object.values(markers).some(
+          (m) => m.getLatLng().lat === lat2 && m.getLatLng().lng === lon2
+        )
+      ) {
+        [lat2, lon2] = jitter(lat2, lon2);
+      }
+
+      if (markers[id]) {
+        markers[id].setLatLng([lat2, lon2]);
+        markers[id].bindPopup(`${name} is here`);
+      } else {
+        markers[id] = L.marker([lat2, lon2])
+          .bindPopup(`${name} is here`)
+          .addTo(map);
+      }
+      updatePolyline();
+    });
+
+    socket.on("user-disconnected", (id) => {
+      if (markers[id]) {
+        map.removeLayer(markers[id]);
+        delete markers[id];
+        updatePolyline();
+      }
+    });
+
+    function updatePolyline() {
+      const latlngs = Object.values(markers).map((m) => m.getLatLng());
+      polyline.setLatLngs(latlngs);
+    }
+  },
+  (err) => {
+    console.error(err);
+    alert("Cannot get your location");
+  },
+  { enableHighAccuracy: true }
+);
+
+// Jitter function to separate overlapping markers
+function jitter(lat, lon) {
+  const offset = 0.00005;
+  return [
+    lat + (Math.random() - 0.5) * offset,
+    lon + (Math.random() - 0.5) * offset,
+  ];
 }
