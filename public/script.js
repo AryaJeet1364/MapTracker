@@ -150,7 +150,7 @@
 
 // const socket = io();
 
-// let user = localStorage.getItem("username");
+// let user = localStorage.getItem("user");
 
 // if (navigator.geolocation) {
 //   navigator.geolocation.getCurrentPosition(
@@ -235,12 +235,8 @@
 
 const socket = io();
 
-// Global username
-username = localStorage.getItem("username");
-if (!username) {
-  username = prompt("Enter your name") || "Anonymous";
-  localStorage.setItem("username", username);
-}
+// Global user
+user = localStorage.getItem("username");
 
 if (!navigator.geolocation) {
   alert("Geolocation not supported");
@@ -266,14 +262,14 @@ navigator.geolocation.getCurrentPosition(
 
     // Add self marker
     markers[socket.id] = L.marker([lat, lon])
-      .bindPopup(`${username} is here`)
+      .bindPopup(`${user} is here`)
       .addTo(map)
       .openPopup();
 
     socket.emit("send-location", {
       latitude: lat,
       longitude: lon,
-      name: username,
+      name: user,
     });
 
     // Watch position
@@ -283,13 +279,13 @@ navigator.geolocation.getCurrentPosition(
         const lon = pos.coords.longitude;
 
         markers[socket.id].setLatLng([lat, lon]);
-        markers[socket.id].bindPopup(`${username} is here`).openPopup();
+        markers[socket.id].bindPopup(`${user} is here`).openPopup();
         map.setView([lat, lon], 16);
 
         socket.emit("send-location", {
           latitude: lat,
           longitude: lon,
-          name: username,
+          name: user,
         });
         updatePolyline();
       },
