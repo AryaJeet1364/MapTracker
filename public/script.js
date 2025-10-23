@@ -150,11 +150,7 @@
 
 const socket = io();
 
-username = localStorage.getItem("username");
-if (!username) {
-  username = prompt("Enter your name") || "Anonymous";
-  localStorage.setItem("username", username);
-}
+let user = localStorage.getItem("username");
 
 if (navigator.geolocation) {
   navigator.geolocation.getCurrentPosition(
@@ -173,7 +169,7 @@ if (navigator.geolocation) {
 
       // Add your own marker immediately
       markers[socket.id] = L.marker([lat, lon])
-        .bindPopup(`${username} is here`)
+        .bindPopup(`${user} is here`)
         .addTo(map)
         .openPopup();
 
@@ -181,7 +177,7 @@ if (navigator.geolocation) {
       socket.emit("send-location", {
         latitude: lat,
         longitude: lon,
-        name: username,
+        name: user,
       });
 
       // Watch position and update
@@ -191,13 +187,13 @@ if (navigator.geolocation) {
           const lon = pos.coords.longitude;
 
           markers[socket.id].setLatLng([lat, lon]);
-          markers[socket.id].bindPopup(`${username} is here`);
+          markers[socket.id].bindPopup(`${user} is here`);
           map.setView([lat, lon], 16);
 
           socket.emit("send-location", {
             latitude: lat,
             longitude: lon,
-            name: username,
+            name: user,
           });
         },
         (err) => console.error(err),
